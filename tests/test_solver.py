@@ -145,3 +145,42 @@ def test_readonly_and_no_input_mutation(grid):
     with pytest.raises(ValueError):
         grid.mass[0] = 0
     assert evolve(grid, t, 0.01, 0).shape == (1, 4)
+
+
+@pytest.mark.parametrize("method", ["be", "cn", "rannacher"])
+def test_analytical_two_cell_mode(method):
+    grid = HeatGrid([0, 0.3, 1], [2, 4], [3, 1])
+    initial = np.array([4.0, 1.0])
+    lam = grid.conductance[0] * np.sum(1 / grid.mass)
+    mean = grid.heat(initial) / grid.mass.sum()
+    dt, steps = 0.02, 7
+    z = lam * dt
+    cn = (1 - z / 2) / (1 + z / 2)
+    amplification = {
+        "be": (1 + z) ** -steps,
+        "cn": cn**steps,
+        "rannacher": (1 + z / 2) ** -4 * cn ** (steps - 2),
+    }[method]
+    assert_allclose(
+        evolve(grid, initial, dt, steps, method)[-1],
+        mean + amplification * (initial - mean),
+        atol=3e-14,
+    )
+    assert_allclose(
+        exact_discrete(grid, initial, steps * dt),
+        mean + np.exp(-lam * steps * dt) * (initial - mean),
+        atol=3e-14,
+    )
+
+
+def test_cn_sufficient_positivity_and_be_large_step(grid):
+    for method, dt in [("cn", 2 * grid.explicit_bound), ("be", 10.0)]:
+        columns = np.column_stack([evolve(grid, e, dt, 1, method)[-1] for e in np.eye(4)])
+        assert columns.min() >= -1e-14
+        assert_allclose(columns @ np.ones(4), 1, atol=3e-13)
+
+
+@pytest.mark.parametrize("time", [-1, np.inf, np.nan])
+def test_invalid_exact_time(grid, time):
+    with pytest.raises(ValueError):
+        exact_discrete(grid, [1, 2, 3, 4], time)
