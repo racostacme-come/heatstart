@@ -45,10 +45,10 @@ There are no random seeds, private inputs, or external numerical data to fetch.
 With unit cross-sectional area, insulated ends, constant-in-time positive
 conductivity k and volumetric heat capacity c:
 
-\[
+$$
 c(x)\partial_t T=\partial_x(k(x)\partial_xT),\quad
 kT_x|_{0,1}=0,\qquad M\dot{T}+KT=0.
-\]
+$$
 
 Each cell has M_i=c_i Δx_i. Adjacent cell conductance is
 g_(i+1/2)=[Δx_i/(2k_i)+Δx_(i+1)/(2k_(i+1))]^-1. Each internal face

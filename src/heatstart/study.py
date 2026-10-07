@@ -11,6 +11,12 @@ from .solver import HeatGrid, evolve, exact_discrete
 METHODS = ("cn", "be", "rannacher")
 
 
+def _save_csv(path, values, header):
+    # Stable bytes are required by manuscript hashes on Windows and Linux.
+    with path.open("w", encoding="utf-8", newline="\n") as stream:
+        np.savetxt(stream, values, delimiter=",", comments="", header=header)
+
+
 def weighted_error(grid, actual, reference):
     return float(np.sqrt(grid.mass @ (actual - reference) ** 2 / grid.mass.sum()))
 
@@ -118,20 +124,16 @@ def run(output):
             *(histories[m][-1] for m in METHODS),
         ]
     )
-    np.savetxt(
+    _save_csv(
         output / "profiles.csv",
         profiles,
-        delimiter=",",
-        comments="",
         header="x,initial,exact_first,cn_first,be_first,rannacher_first,"
         "exact_final,cn_final,be_final,rannacher_final",
     )
     for m, history in histories.items():
-        np.savetxt(
+        _save_csv(
             output / f"history_{m}.csv",
             np.column_stack([np.arange(steps + 1) * dt, history]),
-            delimiter=",",
-            comments="",
             header="time," + ",".join(f"cell_{i}" for i in range(128)),
         )
     (output / "metrics.json").write_text(

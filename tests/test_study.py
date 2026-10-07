@@ -21,4 +21,5 @@ def test_recorded_experiment(tmp_path):
     assert np.all(np.array(result["spatial_orders"]) > 1.99)
     assert json.loads((tmp_path / "metrics.json").read_text()) == result
     assert len(list(tmp_path.glob("*.png"))) == 3
+    assert all(b"\r" not in p.read_bytes() for p in tmp_path.glob("*.csv"))
     assert np.loadtxt(tmp_path / "history_cn.csv", delimiter=",", skiprows=1).shape == (13, 129)
